@@ -112,4 +112,9 @@ defmodule Membrane.RTMP.SourceBin do
   def pass_control(socket, source) do
     :gen_tcp.controlling_process(socket, source)
   end
+
+  @spec pass_control(:ssl.sslsocket(), pid) :: :ok | {:error, any}
+  def pass_control(socket, source) do
+    :ssl.controlling_process(socket, source)
+  end
 end
