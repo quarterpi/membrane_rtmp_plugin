@@ -109,8 +109,8 @@ defmodule Membrane.RTMP.SourceBin do
   To succeed, the executing process must be in control of the socket, otherwise `{:error, :not_owner}` is returned.
   """
   @spec pass_control(:ssl.sslsocket(), pid) :: :ok | {:error, any}
-  def pass_control(socket, source) do
-    :ssl.controlling_process(socket, source)
+  def pass_control({:sslsocket, {:gen_tcp, port, :tls_connection, opts}, source) do
+    :gen_tcp.controlling_process(port, source)
   end
 
   @spec pass_control(:gen_tcp.socket(), pid) :: :ok | {:error, atom}
