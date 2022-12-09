@@ -131,6 +131,18 @@ defmodule Membrane.RTMP.Source do
   end
 
   def handle_other(:start_receiving, _ctx, %{socket_retries: retries} = state) do
+    case :ssl.controlling_process(state.socket, state.receiver_pid) do
+      :ok ->
+        :ok = :inet.setopts(state.socket, active: :once)
+        {:ok, %{state | socket_ready?: true}}
+
+      {:error, _reason} ->
+        Process.send_after(self(), :start_receiving, 200)
+        {:ok, %{state | socket_retries: retries - 1}}
+    end
+  end
+
+  def handle_other(:start_receiving, _ctx, %{socket_retries: retries} = state) do
     case :gen_tcp.controlling_process(state.socket, state.receiver_pid) do
       :ok ->
         :ok = :inet.setopts(state.socket, active: :once)
