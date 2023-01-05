@@ -91,6 +91,12 @@ defmodule Membrane.RTMP.Source do
 
   defp receive_loop(socket, target) do
     receive do
+      {:ssl, _port, packet} ->
+        send(target, {:ssl, socket, packet})
+
+      {:ssl_closed, _port} ->
+        send(target, {:ssl_closed, socket})
+
       {:tcp, _port, packet} ->
         send(target, {:tcp, socket, packet})
 
@@ -167,8 +173,24 @@ defmodule Membrane.RTMP.Source do
     {{:ok, actions}, %{state | message_parser: message_parser}}
   end
 
+  def handle_other({:ssl, socket, packet}, _ctx, state) do
+    state = %{state | socket: socket}
+
+    {messages, message_parser} =
+      MessageHandler.parse_packet_messages(packet, state.message_parser)
+
+    state = MessageHandler.handle_client_messages(messages, state)
+    {actions, state} = get_actions(state)
+
+    {{:ok, actions}, %{state | message_parser: message_parser}}
+  end
+
   @impl true
   def handle_other({:tcp_closed, _port}, _ctx, state) do
+    {{:ok, end_of_stream: :output}, state}
+  end
+
+  def handle_other({:ssl_closed, _port}, _ctx, state) do
     {{:ok, end_of_stream: :output}, state}
   end
 
