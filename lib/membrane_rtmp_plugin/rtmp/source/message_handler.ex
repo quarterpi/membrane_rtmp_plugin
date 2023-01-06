@@ -36,7 +36,7 @@ defmodule Membrane.RTMP.MessageHandler do
     end)
     |> case do
       {:error, :stream_validation, state} ->
-        :gen_tcp.shutdown(state.socket, :read_write)
+        :ssl.shutdown(state.socket, :read_write)
 
         state
 
@@ -64,7 +64,7 @@ defmodule Membrane.RTMP.MessageHandler do
   end
 
   defp do_handle_client_message(%Handshake.Step{type: :s0_s1_s2} = step, _header, state) do
-    :gen_tcp.send(state.socket, Handshake.Step.serialize(step))
+    :ssl.send(state.socket, Handshake.Step.serialize(step))
 
     connection_epoch = Handshake.Step.epoch(step)
     {:cont, %{state | epoch: connection_epoch}}
@@ -248,7 +248,7 @@ defmodule Membrane.RTMP.MessageHandler do
 
     payload = Message.chunk_payload(body, chunk_stream_id, chunk_size)
 
-    :gen_tcp.send(socket, [header | payload])
+    :ssl.send(socket, [header | payload])
   end
 
   defp validation_action(state, stage, result) do

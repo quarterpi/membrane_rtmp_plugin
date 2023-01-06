@@ -35,7 +35,7 @@ defmodule Membrane.RTMP.SourceBin do
     demand_unit: :buffers
 
   def_options socket: [
-                spec: :gen_tcp.socket(),
+                spec: :ssl.socket(),
                 description: """
                 Socket, on which the bin will receive RTMP stream. The socket will be passed to the `RTMP.Source`.
                 The socket must be already connected to the RTMP client and be in non-active mode (`active` set to `false`).
@@ -111,10 +111,5 @@ defmodule Membrane.RTMP.SourceBin do
   @spec pass_control(:ssl.sslsocket(), pid) :: :ok | {:error, any}
   def pass_control(socket, source) do
     :ssl.controlling_process(socket, source)
-  end
-
-  @spec pass_control(:gen_tcp.socket(), pid) :: :ok | {:error, atom}
-  def pass_control(socket, source) do
-    :gen_tcp.controlling_process(socket, source)
   end
 end
