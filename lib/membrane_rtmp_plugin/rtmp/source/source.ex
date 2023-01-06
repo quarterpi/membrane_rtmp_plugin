@@ -3,7 +3,7 @@ defmodule Membrane.RTMP.Source do
   Membrane Element for receiving an RTMP stream. Acts as a RTMP Server.
 
   When initializing, the source sends `t:socket_control_needed_t/0` notification,
-  upon which it should be granted the control over the `socket` via `:gen_tcp.controlling_process/2`.
+  upon which it should be granted the control over the `socket` via `:ssl.controlling_process/2`.
 
   The Source allows for providing custom validator module, that verifies some of the RTMP messages.
   The module has to implement the `Membrane.RTMP.MessageValidator` behaviour.
@@ -23,7 +23,7 @@ defmodule Membrane.RTMP.Source do
     mode: :pull
 
   def_options socket: [
-                spec: :gen_tcp.socket(),
+                spec: :ssl.socket(),
                 description: """
                 Socket on which the source will be receiving the RTMP stream. The socket must be already connected to the RTMP client and be in non-active mode (`active` set to `false`).
                 """
@@ -36,9 +36,9 @@ defmodule Membrane.RTMP.Source do
               ]
 
   @typedoc """
-  Notification sent when the RTMP Source element is initialized and it should be granted control over the socket using `:gen_tcp.controlling_process/2`.
+  Notification sent when the RTMP Source element is initialized and it should be granted control over the socket using `:ssl.controlling_process/2`.
   """
-  @type socket_control_needed_t() :: {:socket_control_needed, :gen_tcp.socket(), pid()}
+  @type socket_control_needed_t() :: {:socket_control_needed, :ssl.socket(), pid()}
 
   @type validation_stage_t :: :publish | :release_stream | :set_data_frame
 
@@ -149,7 +149,7 @@ defmodule Membrane.RTMP.Source do
   end
 
   def handle_other(:start_receiving, _ctx, %{socket_retries: retries} = state) do
-    case :gen_tcp.controlling_process(state.socket, state.receiver_pid) do
+    case :ssl.controlling_process(state.socket, state.receiver_pid) do
       :ok ->
         :ok = :inet.setopts(state.socket, active: :once)
         {:ok, %{state | socket_ready?: true}}
